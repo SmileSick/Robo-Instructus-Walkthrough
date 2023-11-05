@@ -1,0 +1,46 @@
+#const
+var UP_DIR = 1
+var RIGHT_DIR = 2
+var DOWN_DIR = 3
+var LEFT_DIR = 4
+
+#variables
+var dir = 90
+
+#functions
+fun TurnLeft()
+    robo_left()
+    dir = (dir + 120) % 360
+
+fun MoveForward()
+    robo_forward()
+    dir = (dir + 300) % 360
+
+fun LookUp()
+    while dir is not 90
+        TurnLeft()
+
+fun LookDown()
+    while dir is not 270
+        TurnLeft()
+
+fun LookLeft()
+    while not (dir is 150 or dir is 210)
+        TurnLeft()
+
+fun LookRight()
+    while not (dir is 30 or dir is 330)
+        TurnLeft()
+
+#main
+loop
+    MoveForward()
+    var scan = robo_use()
+    if scan is UP_DIR
+        LookUp()
+    else if scan is RIGHT_DIR
+        LookRight()
+    else if scan is DOWN_DIR
+        LookDown()
+    else # LEFT_DIR
+        LookLeft()
