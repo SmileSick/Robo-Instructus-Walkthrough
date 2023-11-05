@@ -1,0 +1,11 @@
+var MOVE = 0
+var NO_DATA = -20000
+
+loop
+    var data = NO_DATA
+    while data < 0
+        data = receive(0)
+    if data is MOVE
+        robo_forward()
+    else
+        robo_left()
