@@ -1,0 +1,130 @@
+#const
+var UP_DIR = 1
+var RIGHT_DIR = 2
+var DOWN_DIR = 3
+var LEFT_DIR = 4
+var NO_TILE = -1
+var UNKNOWN_TILE = -999
+var SWITCH_TILE = 10
+var LOCATION_DATA_TILE = 11
+var DIRECTION_DATA_TILE = 12
+var MAX_STEPS = 50
+
+#variables
+var dir = 90
+seq good[]
+seq bad[]
+seq used[]
+var scan
+var checkSwitch
+var steps
+
+#functions
+fun TurnLeft()
+    robo_left()
+    dir = (dir + 120) % 360
+
+fun MoveForward()
+    robo_forward()
+    dir = (dir + 300) % 360
+    CheckCircle()
+
+fun CheckCircle()
+    steps += 1
+    if steps > MAX_STEPS
+        steps = 0
+        TurnLeft()
+        TurnLeft()
+        MoveForward()
+
+fun LookUp()
+    while dir is not 90
+        TurnLeft()
+
+fun LookDown()
+    while dir is not 270
+        TurnLeft()
+
+fun LookLeft()
+    while not (dir is 150 or dir is 210)
+        TurnLeft()
+
+fun LookRight()
+    while not (dir is 30 or dir is 330)
+        TurnLeft()
+
+fun DirWalk()
+    loop
+        scan = robo_use()
+        if scan < 1
+            break
+        else if scan is UP_DIR
+            LookUp()
+        else if scan is RIGHT_DIR
+            LookRight()
+        else if scan is DOWN_DIR
+            LookDown()
+        else # LEFT_DIR
+            LookLeft()
+        MoveForward()
+        AddInArray(robo_location(), good[])
+
+fun AddInArray(loc, arr[])
+    if not InArray(loc, arr[])
+        arr[].add(loc)
+
+fun InArray(loc, arr[])
+    for tile in arr[]
+        if tile is loc
+            return 1
+    return 0
+
+fun Adjacent(loc)
+    var check = 1
+    var adj = robo_detect_adjacent()
+    if adj is 3
+        good[].add(loc)
+        MoveForward()
+    else
+        for i in 0, 1
+            TurnLeft()
+            var scan = robo_scan()
+            if scan > 0 or InArray(robo_forward_location(), good[])
+                adj -= 1
+            else if scan is UNKNOWN_TILE and not InArray(robo_forward_location(), bad[])
+                check = 0
+        TurnLeft()
+        if adj and check
+            good[].add(loc)
+            MoveForward()
+        else if check
+            bad[].add(loc)
+            TurnLeft()
+    return check
+
+#main
+loop
+    scan = robo_scan()
+    if scan > 0
+        MoveForward()
+        if scan is SWITCH_TILE and not checkSwitch
+            checkSwitch = 1
+            if robo_use() is 0
+                robo_use()
+        else if scan is LOCATION_DATA_TILE
+            var loc = robo_location()
+            if not InArray(loc, used[])
+                good[].add(robo_use())
+                used[].add(loc)
+        else if scan is DIRECTION_DATA_TILE
+            DirWalk()
+    else if scan is NO_TILE
+        TurnLeft()
+    else # UNKNOWN_TILE
+        var loc = robo_forward_location()
+        if InArray(loc, good[])
+            MoveForward()
+        else if InArray(loc, bad[])
+            TurnLeft()
+        else if not Adjacent(loc)
+            TurnLeft()
