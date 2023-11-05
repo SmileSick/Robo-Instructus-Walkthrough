@@ -1,0 +1,23 @@
+var good
+var count = 0
+var checkSwitch
+
+loop
+    var scan = robo_scan()
+    if scan > 0
+        robo_forward()
+        if scan is 10 and not checkSwitch
+            checkSwitch = 1
+            count = 0
+            if robo_use() is 0
+                robo_use()
+        else if scan is 11
+            if count is 3
+                continue
+            else
+                good = robo_use()
+                count += 1
+    else if robo_forward_location() is good
+        robo_forward()
+    else
+        robo_left()
