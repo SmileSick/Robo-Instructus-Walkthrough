@@ -1,0 +1,82 @@
+# constants
+var NO_TILE = -1
+var UNKNOWN_TILE = -999
+var JUMP_PAD = 3
+
+# global variable declaration
+seq good[]
+seq bad[]
+seq scanned[]
+var scan
+
+#functions
+fun InArray(loc, arr[])
+    for tile in arr[]
+        if tile is loc
+            return 1
+    return 0
+
+fun AddInArray(loc, arr[])
+    if not InArray(loc, arr[])
+        arr[].add(loc)
+
+fun AddGoodLine()
+    for needTurn in 0, 0, 1
+        if needTurn
+            robo_left()
+        if robo_scan() is JUMP_PAD
+            return 0
+        robo_forward()
+        AddInArray(robo_location(), good[])
+    return 1
+
+fun Detect3()
+    scan = robo_detect_3()
+    if scan is 3
+        if not AddGoodLine()
+            return
+    else if scan is 0
+        AddInArray(robo_forward_location(), bad[])
+    else
+        robo_left()
+
+fun Adjacent(loc)
+    var check = 1
+    var adj = robo_detect_adjacent()
+    if adj is 3
+        good[].add(loc)
+        robo_forward()
+    else
+        for i in 0, 1
+            robo_left()
+            var scan = robo_scan()
+            if scan > 0 or InArray(robo_forward_location(), good[])
+                adj -= 1
+            else if scan is UNKNOWN_TILE and not InArray(robo_forward_location(), bad[])
+                check = 0
+        robo_left()
+        if adj and check
+            good[].add(loc)
+            robo_forward()
+        else if check
+            bad[].add(loc)
+            robo_left()
+    return check
+
+# main program
+loop
+    scan = robo_scan()
+    if scan > 0
+        robo_forward()
+        if scan is JUMP_PAD
+            robo_use()
+    else if scan is NO_TILE
+        robo_left()
+    else
+        var loc = robo_forward_location()
+        if InArray(loc, good[])
+            robo_forward()
+        else if InArray(loc, bad[])
+            robo_left()
+        else if not Adjacent(loc)
+            Detect3()
