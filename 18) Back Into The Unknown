@@ -1,0 +1,34 @@
+#variables
+seq good[]
+
+#functions
+fun InArray(loc, arr[])
+    for tile in arr[]
+        if tile is loc
+            return 1
+    return 0
+
+fun AddInArray(loc, arr[])
+    if not InArray(loc, arr[])
+        arr[].add(loc)
+
+fun AddGoodLine()
+    for needTurn in 0, 0, 1
+        if needTurn
+            robo_left()
+        robo_forward()
+        AddInArray(robo_location(), good[])
+
+fun Detect3()
+    if robo_detect_3() is 3
+        AddGoodLine()
+    else
+        robo_left()
+
+# main program
+loop
+    var scan = robo_forward_location()
+    if InArray(scan, good[])
+        robo_forward()
+    else
+        Detect3()
