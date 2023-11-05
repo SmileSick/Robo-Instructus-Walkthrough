@@ -1,0 +1,4 @@
+robo_forward()
+if robo_scan() < 0
+    robo_left()
+robo_forward()
