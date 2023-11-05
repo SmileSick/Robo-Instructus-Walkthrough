@@ -1,0 +1,12 @@
+var exit
+
+loop
+    var scan = robo_scan()
+    if scan > 0
+        robo_forward()
+        if scan is 11 and not exit
+            exit = robo_use()
+    else if robo_forward_location() is exit
+        robo_forward()
+    else
+        robo_left()
