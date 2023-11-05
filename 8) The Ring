@@ -1,0 +1,10 @@
+var stepsToCircle = 44
+
+loop
+    if robo_scan() > 0
+        robo_forward()
+        stepsToCircle -= 1
+        if not stepsToCircle
+            robo_left()
+    else
+        robo_left()
