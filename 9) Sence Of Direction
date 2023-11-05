@@ -1,0 +1,10 @@
+loop
+    var scan = robo_scan()
+    if scan > 0
+        robo_forward()
+        if scan is 12
+            loop
+                robo_forward()
+                robo_left()
+    else
+        robo_left()
