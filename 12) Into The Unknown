@@ -1,0 +1,5 @@
+loop
+    if robo_detect_adjacent() < 3
+        robo_left()
+        robo_left()
+    robo_forward()
