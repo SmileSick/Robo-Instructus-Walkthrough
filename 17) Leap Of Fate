@@ -1,0 +1,8 @@
+loop
+    var scan = robo_scan()
+    if scan > 0
+        robo_forward()
+        if scan is 3
+            robo_use()
+    else
+        robo_left()
