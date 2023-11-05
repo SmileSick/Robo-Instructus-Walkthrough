@@ -1,0 +1,12 @@
+var checkSwitch
+
+loop
+    var scan = robo_scan()
+    if scan > 0
+        robo_forward()
+        if scan is 10 and not checkSwitch
+            checkSwitch = 1
+            if robo_use() is 0
+                robo_use()
+    else
+        robo_left()
