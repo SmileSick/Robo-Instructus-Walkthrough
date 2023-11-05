@@ -1,0 +1,5 @@
+loop
+    if robo_scan() > 0
+        robo_forward()
+    else
+        robo_left()
