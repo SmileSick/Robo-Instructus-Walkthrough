@@ -1,0 +1,48 @@
+# constants
+var LEFT = 1
+var RIGHT = not LEFT
+
+# variables
+seq good[]
+seq scanned[]
+
+#functions
+fun AddInArray(loc, arr[])
+    if not InArray(loc, arr[])
+        arr[].add(loc)
+
+fun InArray(loc, arr[])
+    for tile in arr[]
+        if tile is loc
+            return 1
+    return 0
+
+fun GoodLine(dir)
+    for add in 1, 0
+        for count in 0, 1, 2
+            if count is (2 - dir)
+                robo_left()
+            robo_forward()
+            if add
+                AddInArray(robo_location(), good[])
+        robo_left()
+        robo_left()
+
+fun ScanAllDir(scan)
+    for i in 0, 1, 2
+        if robo_detect_3() is 3
+            GoodLine(RIGHT)
+        if robo_detect_3l() is 3
+            GoodLine(LEFT)
+        robo_left()
+    scanned[].add(scan)
+
+# main program
+loop
+    var scan = robo_location()
+    if not InArray(scan, scanned[])
+        ScanAllDir(scan)
+    else if InArray(robo_forward_location(), good[])
+        robo_forward()
+    else
+        robo_left()
