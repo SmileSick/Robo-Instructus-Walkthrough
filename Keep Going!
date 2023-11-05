@@ -1,0 +1,4 @@
+loop
+    robo_forward()
+    robo_left()
+    robo_forward()
