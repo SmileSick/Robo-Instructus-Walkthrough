@@ -1,0 +1,47 @@
+seq good[]
+seq bad[]
+var scan
+
+fun AddInArray(loc, arr[])
+    if not InArray(loc, arr[])
+        arr[].add(loc)
+
+fun InArray(loc, arr[])
+    for tile in arr[]
+        if tile is loc
+            return 1
+    return 0
+
+fun Adjacent(loc)
+    var adj = robo_detect_adjacent()
+    if adj is 3
+        good[].add(loc)
+        robo_forward()
+    else
+        for i in 0, 1
+            robo_left()
+            scan = robo_scan()
+            if scan > 0 or InArray(robo_forward_location(), good[])
+                adj -= 1
+        robo_left()
+        if adj
+            good[].add(loc)
+            robo_forward()
+        else
+            bad[].add(loc)
+            robo_left()
+
+loop
+    scan = robo_scan()
+    if scan > 0
+        robo_forward()
+    else if scan is -1
+        robo_left()
+    else
+        var loc = robo_forward_location()
+        if InArray(loc, good[])
+            robo_forward()
+        else if InArray(loc, bad[])
+            robo_left()
+        else 
+            Adjacent(loc)
