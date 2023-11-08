@@ -1,0 +1,198 @@
+# constants
+var UP_DIR = 1
+var RIGHT_DIR = 2
+var DOWN_DIR = 3
+var LEFT_DIR = 4
+var NO_TILE = -1
+var UNKNOWN_TILE = -999
+var NO_DATA = -20000
+var DIRECTION_DATA_TILE = 12
+var MOVE = 100
+var TURN = 200
+var SCAN = 300
+var NEXT = 350
+
+#variables
+seq good[]
+seq bad[]
+var scan
+var dir = 90
+
+#functions
+fun GoUp()
+    while dir is not 90
+        TurnLeft()
+    MoveWithScan()
+
+fun GoDown()
+    while dir is not 270
+        TurnLeft()
+    MoveWithScan()
+
+fun GoLeft()
+    while not (dir is 150 or dir is 210)
+        TurnLeft()
+    MoveWithScan()
+
+fun GoRight()
+    while not (dir is 30 or dir is 330)
+        TurnLeft()
+    MoveWithScan()
+
+fun DirWalk()
+    while scan is DIRECTION_DATA_TILE
+        var dirButton = robo_use()
+        if dirButton is UP_DIR
+            GoUp()
+        else if dirButton is RIGHT_DIR
+            GoRight()
+        else if dirButton is DOWN_DIR
+            GoDown()
+        else if dirButton is LEFT_DIR
+            GoLeft()
+
+fun MoveWithScan()
+    scan = Robo_Scaner()
+    AddInArray(robo_forward_location(), good[])
+    MoveForward()
+
+fun MoveForward()
+    transmit(0, MOVE)
+    robo_forward()
+    dir -= 60
+    if dir < 0
+        dir += 360
+
+fun TurnLeft()
+    transmit(0, TURN)
+    robo_left()
+    dir += 120
+    if dir >= 360
+        dir -= 360
+
+fun Robo_Scaner()
+    transmit(0, SCAN)
+    scan = NO_DATA
+    while scan is NO_DATA
+        scan = receive(0)
+    return scan
+
+fun Adjacent(loc)
+    var check = 1
+    var adj = robo_detect_adjacent()
+    if adj is 3
+        AddInArray(loc, good[])
+        MoveForward()
+    else
+        for i in 0, 1
+            TurnLeft()
+            scan = Robo_Scaner()
+            if scan > 0 or InArray(robo_forward_location(), good[])
+                adj -= 1
+            else if scan is UNKNOWN_TILE and not InArray(robo_forward_location(), bad[])
+                check = 0
+        TurnLeft()
+        if adj and check
+            AddInArray(loc, good[])
+            MoveForward()
+        else if check
+            AddInArray(loc, bad[])
+            TurnLeft()
+    return check
+
+fun InArray(loc, arr[])
+    for tile in arr[]
+        if tile is loc
+            return 1
+    return 0
+
+fun AddInArray(loc, arr[])
+    if not InArray(loc, arr[])
+        arr[].add(loc)
+
+fun FindNext()
+    transmit(0, NEXT)
+    scan = NO_DATA
+    while scan is NO_DATA
+        scan = receive(0)
+    good[].add(scan)
+
+#main
+var check = 1
+loop
+    scan = Robo_Scaner()
+    if scan > 0
+        MoveForward()
+        if scan is DIRECTION_DATA_TILE and check
+            DirWalk()
+            check = 0
+            FindNext()
+    else if scan is NO_TILE
+        TurnLeft()
+    else
+        scan = robo_forward_location()
+        if InArray(scan, good[])
+            MoveForward()
+        else if InArray(scan, bad[])
+            TurnLeft()
+        else if not Adjacent(scan)
+            TurnLeft()
+
+----------------------------------------------------
+
+# constants
+var NO_TILE = -1
+var UNKNOWN_TILE = -999
+var NO_DATA = -20000
+var MOVE = 100
+var TURN = 200
+var SCAN = 300
+var NEXT = 350
+
+#functions
+fun Find()
+    var check
+    for i in 0, 2, 1
+        probo_forward()
+        probo_left()
+        probo_forward()
+        if probo_use() > 0
+            check = 1
+        probo_left()
+        probo_left()
+        probo_forward()
+        if check
+            check = probo_location()
+        probo_forward()
+        probo_left()
+        probo_left()
+        if check
+            while i > 0
+                probo_left()
+                i -= 1
+            break
+        probo_left()
+    transmit(0, check)
+
+fun WaitData()
+    var data = NO_DATA
+    while data is NO_DATA
+        data = receive(0)
+    return data
+
+#main
+loop
+    var order = WaitData()
+    if order is MOVE
+        probo_forward()
+    else if order is TURN
+        probo_left()
+    else if order is SCAN
+        for get in 1, 0
+            probo_forward()
+            if get
+                transmit(0, probo_scan())
+            probo_left()
+            probo_left()
+    else if order is NEXT
+        Find()
