@@ -1,0 +1,160 @@
+#const
+var NO_DATA = -20000
+
+#variables
+seq good[]
+seq used[]
+var data = NO_DATA
+
+#functions
+fun InArray(loc, arr[])
+    for tile in arr[]
+        if tile is loc
+            return 1
+    return 0
+
+#main
+loop
+    while data is NO_DATA
+        data = receive(0)
+    if data is 0
+        break
+    good[].add(data)
+    data = NO_DATA
+loop
+    var scan = robo_forward_location()
+    if InArray(scan, good[]) and not InArray(scan, used[])
+        robo_forward()
+        used[].add(scan)
+    else
+        robo_left()
+
+---------------------------------------------------------------------
+
+# constants
+var FINISH = 2
+var JUMP_UP = 3
+var JUMP_RIGHT = 4
+var JUMP_LEFT = 5
+
+#variables
+var dir = 90
+var checkCircle
+seq good[] = probo_location()
+seq bad[]
+seq dirs[] = dir
+seq jumpDirs[]
+
+#functions
+fun MoveForward()
+    probo_forward()
+    dir = (dir + 300) % 360
+
+fun TurnLeft()
+    probo_left()
+    dir = (dir + 120) % 360
+
+fun InArray(loc, arr[])
+    for tile in arr[]
+        if tile is loc
+            return 1
+    return 0
+
+fun Look(direction)
+    while dir is not direction
+        TurnLeft()
+
+fun BackMove()
+    dirs[].remove(dirs[].size() - 1)
+    var index = good[].size() - 1
+    bad[].add(good[index])
+    good[].remove(index)
+    TurnLeft()
+    TurnLeft()
+    MoveForward()
+    Look(dirs[dirs[].size() - 1])
+
+fun BackTurn()
+    dirs[].remove(dirs[].size() - 1)
+    TurnLeft()
+    TurnLeft()
+
+fun Jump()
+    for needTurn in 1, 1, 0, 0
+        MoveForward()
+        if needTurn
+            TurnLeft()
+    good[].add(probo_location())
+    Look(dirs[dirs[].size() - 1])
+    dirs[].add(dir)
+    if probo_scan() < 0
+        BackJump()
+
+fun BackJump()
+    dirs[].remove(dirs[].size() - 1)
+    var index = good[].size() - 1
+    bad[].add(good[index])
+    good[].remove(index)
+    var index = jumpDirs[].size() - 1
+    Look(jumpDirs[index])
+    jumpDirs[].remove(index)
+    for needTurn in 0, 1, 1, 0
+        MoveForward()
+        if needTurn
+            TurnLeft()
+    Look(dirs[dirs[].size() - 1])
+
+fun Replay()
+    var dirIndex = dirs[].size() - 1
+    var locIndex = good[].size() - 1
+    if dirs[dirIndex] - dirs[dirIndex - 1] is 0
+        BackJump()
+    else if (dirs[dirIndex] - dirs[dirIndex - 1]) % 120 is 0
+        BackTurn()
+    else
+        BackMove()
+
+fun RemoveMovesTo(loc)
+    while good[good[].size() - 1] is not loc
+        Replay()
+    Look(dirs[dirs[].size() - 1])
+    
+#main
+loop
+    MoveForward()
+    var scan = probo_scan()
+    if scan is FINISH
+        break
+    var loc = probo_location()
+    if scan > 0 and not InArray(loc, bad[]) and not InArray(loc, good[])
+        good[].add(loc)
+        dirs[].add(dir)
+        if scan is JUMP_UP
+            jumpDirs[].add(270)
+            Look(30)
+            Jump()
+        else if scan is JUMP_RIGHT
+            jumpDirs[].add(150)
+            Look(270)
+            Jump()
+        else if scan is JUMP_LEFT
+            jumpDirs[].add(30)
+            Look(150)
+            Jump()
+        checkCircle = 0
+    else
+        TurnLeft()
+        TurnLeft()
+        MoveForward()
+        dirs[].add(dir)
+        checkCircle += 1
+        if checkCircle is 3
+            var index = dirs[].size() - 1
+            for i in 0, 1, 2
+                dirs[].remove(index - i)
+            RemoveMovesTo(good[good[].size() - 2])
+            checkCircle = 0
+good[].add(probo_location())
+for i in good[]
+    transmit(0, i)
+transmit(0, 0)
