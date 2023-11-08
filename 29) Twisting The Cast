@@ -1,0 +1,136 @@
+# constants
+var NO_DATA = -20000
+var MOVE = 100
+var TURN = 200
+var SCAN = 300
+var JUMP = 600
+
+#variables
+var scan
+
+#functions
+fun MoveForward()
+    transmit(0, MOVE)
+    robo_forward()
+
+fun TurnLeft()
+    transmit(0, TURN)
+    robo_left()
+
+fun WaitData()
+    scan = NO_DATA
+    while scan is NO_DATA
+        scan = receive(0)
+
+fun Robo_Scaner()
+    transmit(0, SCAN)
+    WaitData()
+    return scan
+
+fun JumpScaner()
+    transmit(0, JUMP)
+    WaitData()
+    if scan
+        MoveForward()
+        robo_use()
+    else
+        TurnLeft()
+
+#main
+loop
+    scan = Robo_Scaner()
+    if scan > 0
+        if scan > 2 and scan < 6
+            JumpScaner()
+        else
+            MoveForward()
+    else
+        TurnLeft()
+
+------------------------------------------------------------
+
+# constants
+var RIGHT = 0
+var LEFT = 1
+var FINISH = 2
+var NO_DATA = -20000
+var MOVE = 100
+var TURN = 200
+var SCAN = 300
+var JUMP = 600
+
+#variables
+var order
+var result
+var data
+
+#functions
+fun Move(step, left)
+    var count
+    while count < step
+        probo_forward()
+        count += 1
+        if count % 2 is left
+            probo_left()
+
+fun ComeBack()
+    probo_left()
+    probo_left()
+    Move(5, LEFT)
+    probo_left()
+    probo_left()
+    Move(2, RIGHT)
+    probo_left()
+    probo_left()
+    transmit(0, 0)
+
+fun GoodIsland()
+    var dir
+    var good
+    var start = probo_location()
+    loop
+        probo_forward()
+        dir = (dir + 300) % 360
+        var scan = probo_scan()
+        if scan < 0
+            probo_left()
+            probo_left()
+            probo_forward()
+            dir = (dir + 180) % 360
+        else if scan is FINISH
+            good = 1
+        if dir is 0 and probo_location() is start
+            break
+    return good
+
+#main
+loop
+    order = NO_DATA
+    while order is NO_DATA
+        order = receive(0)
+    if order is MOVE
+        probo_forward()
+    else if order is TURN
+        probo_left()
+    else if order is SCAN
+        for get in 1, 0
+            probo_forward()
+            if get
+                result = probo_scan()
+            probo_left()
+            probo_left()
+        transmit(0, result)
+    else if order is JUMP
+        Move(5, LEFT)
+        probo_left()
+        probo_left()
+        Move(2, RIGHT)
+        if probo_scan() > 0 and GoodIsland()
+            probo_left()
+            probo_left()
+            probo_forward()
+            probo_left()
+            probo_left()
+            transmit(0, JUMP)
+        else
+            ComeBack()
