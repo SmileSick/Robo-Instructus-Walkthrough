@@ -104,3 +104,178 @@ loop
             TurnLeft()
         else if not Adjacent(scan)
             TurnLeft()
+
+---------------------------------------------
+
+#const
+var NO_DATA = -20000
+var MOVE = 100
+var TURN = 200
+var SCAN = 300
+var JUMP = 400
+var JUMP_UP_DIR = 270
+var JUMP_LEFT_DIR = 30
+var JUMP_RIGHT_DIR = 150
+var JUMP_UP = 3
+var JUMP_RIGHT = 4
+var JUMP_LEFT = 5
+
+#variables
+var dir = 90
+seq orders[]
+seq good[]
+seq badJump[]
+var order
+var result
+var scan
+
+#functions
+fun MoveForward()
+    probo_forward()
+    dir = (dir + 300) % 360
+
+fun TurnLeft()
+    probo_left()
+    dir = (dir + 120) % 360
+
+fun BackTurn()
+    TurnLeft()
+    TurnLeft()
+
+fun BackMove()
+    for needMove in 1, 0
+        TurnLeft()
+        TurnLeft()
+        if needMove
+            MoveForward()
+
+fun BackJump(direction, currentDir)
+    LookAt(direction)
+    for needTurn in 0, 1, 1, 0
+        MoveForward()
+        if needTurn
+            TurnLeft()
+    LookAt(currentDir)
+    badJump[].add(probo_location())
+
+fun ScanTile()
+    for i in 0, 1, 2
+        MoveForward()
+        scan = probo_scan()
+        var loc = probo_location()
+        if scan > 0 and not InArray(loc, good[])
+            orders[].add(MOVE)
+            good[].add(probo_location())
+            return 1
+        else
+            BackMove()
+            TurnLeft()
+            orders[].add(TURN)
+    for i in 0, 1, 2
+        orders[].remove(orders[].size() - 1)
+    return 0
+
+fun AlternateWay()
+    Replay()
+    while not ScanTile()
+        if not Replay()
+            return 0
+    return 1
+
+fun FindWay()
+    MoveForward()
+    orders[].add(MOVE)
+    if InArray(probo_location(), badJump[])
+        MoveForward()
+        orders[].add(MOVE)
+    else if not Pinball()
+        if not AlternateWay()
+            TurnLeft()
+            orders[].add(TURN)
+    Prepare()
+    while orders[].size() > 0
+        if orders[0] % 100 > 0
+            transmit(1, JUMP)
+        else
+            transmit(1, orders[0])
+        orders[].remove(0)
+    transmit(1, 0)
+
+fun Replay()
+    var index = orders[].size() - 1
+    var order = orders[index]
+    orders[].remove(index)
+    if order % 100 > 0
+        BackJump(order, dir)
+    else if order is MOVE
+        BackMove()
+    else
+        BackTurn()
+    return index
+
+fun Prepare()
+    var index = orders[].size() - 1
+    while index > -1
+        if orders[index] is MOVE
+            BackMove()
+        else if orders[index] is TURN
+            BackTurn()
+        index -= 1
+
+fun Pinball()
+    scan = probo_scan()
+    var loc = probo_location()
+    while scan > 2 and scan < 6
+        good[].add(loc)
+        if scan is JUMP_UP
+            Jump(JUMP_UP_DIR, dir)
+        else if scan is JUMP_LEFT
+            Jump(JUMP_LEFT_DIR, dir)
+        else if scan is JUMP_RIGHT
+            Jump(JUMP_RIGHT_DIR, dir)
+        scan = probo_scan()
+        loc = probo_location()
+        if scan < 0 or InArray(loc, good[])
+            return 0
+    return 1
+
+fun Jump(direction, currentDir)
+    LookAt((direction + 120) % 360)
+    orders[].add(direction)
+    for needTurn in 1, 1, 0, 0
+        MoveForward()
+        if needTurn
+            TurnLeft()
+    LookAt(currentDir)
+
+fun InArray(loc, arr[])
+    for i in arr[]
+        if loc is i
+            return 1
+    return 0
+
+fun LookAt(direction)
+    while dir is not direction
+        TurnLeft()
+
+#main
+good[].add(probo_location())
+loop
+    order = NO_DATA
+    while order < 0
+        order = receive(0)
+    if order is MOVE
+        MoveForward()
+        good[].add(probo_location())
+    else if order is TURN
+        TurnLeft()
+    else if order is SCAN
+        for get in 1, 0
+            MoveForward()
+            if get
+                result = probo_scan()
+            TurnLeft()
+            TurnLeft()
+        transmit(1, result)
+    else if order is JUMP
+        FindWay()
