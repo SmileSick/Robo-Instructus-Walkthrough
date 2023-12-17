@@ -28,3 +28,26 @@ loop
         robo_forward()
     else
         robo_left()
+
+-------------------------------------------------
+
+#constants
+var NO_TILE = -1
+var LOCATION_DATA = 11
+var FINISH = 2
+
+#main
+var start = probo_location()
+probo_forward()
+while probo_location() is not start
+    var scan = probo_scan()
+    if scan is FINISH
+        transmit(0, probo_location())
+    else if scan is LOCATION_DATA
+        transmit(0, probo_use())
+    else if scan is NO_TILE
+        probo_left()
+        probo_left()
+        probo_forward()
+    probo_forward()
+transmit(0, 0)
