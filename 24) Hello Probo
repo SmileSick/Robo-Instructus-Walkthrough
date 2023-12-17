@@ -9,3 +9,18 @@ loop
         robo_forward()
     else
         robo_left()
+
+----------------------------------
+
+var MOVE = 0
+var TURN = 1
+
+loop
+    probo_forward()
+    if probo_scan() > 0
+        transmit(0, MOVE)
+    else
+        transmit(0, TURN)
+        probo_left()
+        probo_left()
+        probo_forward()
